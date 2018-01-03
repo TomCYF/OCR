@@ -23,13 +23,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-import mjsynth
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+import textsyn
 import model
 
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('model','../data/model_new',
+tf.app.flags.DEFINE_string('model','../data/model',
                           """Directory for model checkpoints""")
 tf.app.flags.DEFINE_string('output','predict',
                           """Sub-directory of model for test summary events""")
@@ -42,19 +46,26 @@ tf.app.flags.DEFINE_integer('test_interval_secs', 60,
 tf.app.flags.DEFINE_string('device','/gpu:0',
                            """Device for graph placement""")
 
-tf.app.flags.DEFINE_string('file_path','../data/predict/demo2.jpg',
+tf.app.flags.DEFINE_string('file_path','../data/predict/testdemo2.png',
                            """Base directory for ../data/predict data""")
-tf.app.flags.DEFINE_string('filename_pattern','val/words-*',
-                           """File pattern for input data""")
-tf.app.flags.DEFINE_integer('num_input_threads',4,
-                          """Number of readers for input data""")
 
 tf.logging.set_verbosity(tf.logging.WARN)
 
 # Non-configurable parameters
 mode = learn.ModeKeys.INFER # 'Configure' training mode for dropout layers
 
-out_charset="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+CHAR_SET_DIR = '/home/tal-cai/Src/cnn_lstm_hwdb_ocr/src/dict'
+
+import codecs
+def get_charset():
+	dict_file = codecs.open(CHAR_SET_DIR,'r',encoding='utf-8')
+	temp_set = []
+	for line in dict_file:
+		char = line.strip().split()[0]
+		temp_set.append(char)
+	return temp_set
+ch_charset = get_charset()
+print len(ch_charset)
 
 def _get_session_config():
     """Setup session config to soften device placement"""
@@ -68,8 +79,10 @@ def _get_input():
 	""" Load the image from source"""
 	
 	raw_image = tf.gfile.FastGFile(FLAGS.file_path, 'r').read()  
-	image_data = tf.image.decode_jpeg(raw_image)
-#	image_data = tf.image.convert_image_dtype(image_data,dtype=tf.uint8)
+	image_data = tf.image.decode_png(raw_image)
+	image_data = tf.image.convert_image_dtype(image_data,dtype=tf.uint8)
+#	image_data = tf.image.flip_up_down(image_data)
+#	image_data = tf.image.transpose_image(image_data)
 	image_data = tf.image.rgb_to_grayscale(image_data)
 
 #	new_height = tf.constant(32, dtype=tf.int32)
@@ -79,7 +92,7 @@ def _get_input():
 	
 #	new_width =  (new_height / height) * width
 #	print shape,height,width,new_height,new_width
-	image_data = tf.image.resize_images(image_data,[32,263])
+	image_data = tf.image.resize_images(image_data,[64,576])
 #	image_shape = image_data.get_shape()
 #	new_width = image_shape[0]/32.*image_shape[1]
 #	print image_shape#,new_width
@@ -95,8 +108,8 @@ def _get_predict(rnn_logits, sequence_length):
 		predictions,_ = tf.nn.ctc_beam_search_decoder(rnn_logits, 
                                                    sequence_length,
                                                    beam_width=128,
-                                                   top_paths=1,
-                                                   merge_repeated=True)
+                                                   top_paths=2,
+                                                   merge_repeated=False)
 		hypothesis = tf.cast(predictions[0], tf.int32) # for edit_distance
 	return hypothesis.values
 
@@ -130,11 +143,11 @@ def main(argv=None):
 		image = _get_input()
 	
 		with tf.device(FLAGS.device):
-			pred_img = tf.placeholder(tf.float32,[1,32,None,1])
+			pred_img = tf.placeholder(tf.float32,[1,64,None,1])
 		 	img_width = tf.placeholder(tf.int32)
 		 	features,sequence_length = model.convnet_layers( pred_img, img_width, mode)
 		 	logits = model.rnn_layers( features, sequence_length,
-                                        mjsynth.num_classes())
+                                        textsyn.num_classes())
 		 	recognition_hypothesis = _get_predict(logits, sequence_length)
 		
 		session_config = _get_session_config()
@@ -143,13 +156,13 @@ def main(argv=None):
 		init_op = tf.group( tf.global_variables_initializer(),
                             tf.local_variables_initializer())
         
-		step_ops = [recognition_hypothesis]
+		step_ops = [recognition_hypothesis,logits,sequence_length]
 	
 		with tf.Session(config=session_config) as sess:
 			sess.run(init_op)
 			
 			image_data = sess.run(image)
-			image_data=image_data.reshape((32,263))
+			image_data=image_data.reshape((64,576))
 			restore_model(sess, _get_checkpoint())
 			# image_data = plt.imread(FLAGS.file_path)
 			# image_data = rgb2gray(image_data)
@@ -165,12 +178,20 @@ def main(argv=None):
 			print image_data.shape
 			plt.imshow(image_data, cmap = plt.cm.gray)
 			
-			image_data = image_data.reshape((1,32,263,1))
-			pred_output = sess.run(step_ops,feed_dict={pred_img:image_data,img_width:263})
+			image_data = image_data.reshape((1,64,576,1))
+			pred_output,l,sl = sess.run(step_ops,feed_dict={pred_img:image_data,img_width:576})
 
-			print pred_output[0]
-			text_output = [out_charset[c] for c in pred_output[0]]
-			plt.title(text_output)		
+			print pred_output
+			text_output = [ch_charset[c].encode('utf-8') for c in pred_output]
+			text = ""
+			for i in text_output:
+				text += i.encode('utf-8')
+			print text
+			print sl
+			#for j in l:
+				#print ch_charset[np.argmax(j)-1].encode('utf-8'),
+				#print j,			
+			plt.title(text)		
 			plt.show()
 			
 

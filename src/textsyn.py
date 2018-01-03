@@ -15,10 +15,12 @@ ch_charset = get_charset()
 def num_classes():
     return len(ch_charset)
 
+bucketed_boundary = [64*n for n in range(1,30)]
+
 def bucketed_input_pipeline(base_dir,file_patterns,
                             num_threads=4,
                             batch_size=32,
-                            boundaries=[32, 64, 96, 128, 160, 192, 224, 256],
+                            boundaries=bucketed_boundary,
                             input_device=None,
                             width_threshold=None,
                             length_threshold=None,

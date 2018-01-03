@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_string('tune_from','',
 tf.app.flags.DEFINE_string('tune_scope','',
                           """Variable scope for training""")
 
-tf.app.flags.DEFINE_integer('batch_size',2**8,
+tf.app.flags.DEFINE_integer('batch_size',2**5,
                             """Mini-batch size""")
 tf.app.flags.DEFINE_float('learning_rate',1e-4,
                           """Initial learning rate""")
@@ -142,7 +142,7 @@ def _get_training(rnn_logits,label,sequence_length):
 
 def _get_session_config():
     """Setup session config to soften device placement"""
-    gpu_options=tf.GPUOptions(per_process_gpu_memory_fraction=0.85)
+    gpu_options=tf.GPUOptions(per_process_gpu_memory_fraction=1.0)
     config=tf.ConfigProto(
         gpu_options=gpu_options,
         allow_soft_placement=True, 
