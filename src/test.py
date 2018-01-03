@@ -19,7 +19,7 @@ import time
 import tensorflow as tf
 from tensorflow.contrib import learn
 
-import mjsynth
+import textsyn
 import model
 
 FLAGS = tf.app.flags.FLAGS
@@ -29,7 +29,7 @@ tf.app.flags.DEFINE_string('model','../data/model',
 tf.app.flags.DEFINE_string('output','test',
                           """Sub-directory of model for test summary events""")
 
-tf.app.flags.DEFINE_integer('batch_size',2**8,
+tf.app.flags.DEFINE_integer('batch_size',2**4,
                             """Eval batch size""")
 tf.app.flags.DEFINE_integer('test_interval_secs', 60,
                              'Time between test runs')
@@ -37,9 +37,9 @@ tf.app.flags.DEFINE_integer('test_interval_secs', 60,
 tf.app.flags.DEFINE_string('device','/gpu:0',
                            """Device for graph placement""")
 
-tf.app.flags.DEFINE_string('test_path','../data/',
+tf.app.flags.DEFINE_string('test_path','../data',
                            """Base directory for test/validation data""")
-tf.app.flags.DEFINE_string('filename_pattern','val/words-*',
+tf.app.flags.DEFINE_string('filename_pattern','test/test-*',
                            """File pattern for input data""")
 tf.app.flags.DEFINE_integer('num_input_threads',4,
                           """Number of readers for input data""")
@@ -53,7 +53,7 @@ mode = learn.ModeKeys.INFER # 'Configure' training mode for dropout layers
 def _get_input():
     """Set up and return image, label, width and text tensors"""
 
-    image,width,label,length,text,filename=mjsynth.threaded_input_pipeline(
+    image,width,label,length,text,filename=textsyn.threaded_input_pipeline(
         FLAGS.test_path,
         str.split(FLAGS.filename_pattern,','),
         batch_size=FLAGS.batch_size,
@@ -133,7 +133,7 @@ def main(argv=None):
         with tf.device(FLAGS.device):
             features,sequence_length = model.convnet_layers( image, width, mode)
             logits = model.rnn_layers( features, sequence_length,
-                                       mjsynth.num_classes() )
+                                       textsyn.num_classes() )
             loss,label_error,sequence_error = _get_testing(
                 logits,sequence_length,label,length)
 

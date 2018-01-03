@@ -31,7 +31,7 @@ tf.app.flags.DEFINE_string('tune_from','',
 tf.app.flags.DEFINE_string('tune_scope','',
                           """Variable scope for training""")
 
-tf.app.flags.DEFINE_integer('batch_size',2**5,
+tf.app.flags.DEFINE_integer('batch_size',2**8,
                             """Mini-batch size""")
 tf.app.flags.DEFINE_float('learning_rate',1e-4,
                           """Initial learning rate""")
@@ -45,7 +45,7 @@ tf.app.flags.DEFINE_float('decay_staircase',False,
                           """Staircase learning rate decay by integer division""")
 
 
-tf.app.flags.DEFINE_integer('max_num_steps', 2**21,
+tf.app.flags.DEFINE_integer('max_num_steps', 2**15,
                             """Number of optimization steps to run""")
 
 tf.app.flags.DEFINE_string('train_device','/gpu:1',
@@ -142,8 +142,7 @@ def _get_training(rnn_logits,label,sequence_length):
 
 def _get_session_config():
     """Setup session config to soften device placement"""
-
-	gpu_options=tf.GPUOptions(per_process_gpu_memory_fraction=0.85)
+    gpu_options=tf.GPUOptions(per_process_gpu_memory_fraction=0.85)
     config=tf.ConfigProto(
         gpu_options=gpu_options,
         allow_soft_placement=True, 
