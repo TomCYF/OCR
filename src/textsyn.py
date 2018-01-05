@@ -1,7 +1,7 @@
 import os
 import tensorflow as tf
 
-CHAR_SET_DIR = '/home/tal-cai/Src/cnn_lstm_hwdb_ocr/src/dict'
+CHAR_SET_DIR = './dict'
 
 def get_charset():
 	dict_file = open(CHAR_SET_DIR,'r')

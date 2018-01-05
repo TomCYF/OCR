@@ -71,27 +71,28 @@ def generate_tfrecord(image_base_dir,output_dir,train_ratio = 0.95):
 		image_dir = os.path.join(image_base_dir,image)
 		image_data, img_height, img_width = get_image(sess,image_dir)
 		text,label = get_text_and_labels(image)
-#		print text,label,image_data.shape
+		print text,label#,image_data.shape
+		
 #		plt.imshow(image_data[:,:,0],cmap='gray')
 #		plt.show()
-		train_dir = ''
-		out_put_filename = ''
-		if np.random.randint(1, 100) < 100 * train_ratio:
-			train_dir = 'train'
-			out_put_filename = train_dir + '-' + str(train_count) + '.tfrecord'
-			train_count += 1
-		else:
-			train_dir = 'test'
-			out_put_filename = train_dir + '-' + str(test_count) + '.tfrecord'
-			test_count += 1
-		output_dir = os.path.join(OUTPUT_DIR,train_dir,out_put_filename)
-		example = make_example(image, image_data, label, text, img_height, img_width)
-		try:
-			writer = tf.python_io.TFRecordWriter(output_dir)
-			writer.write(example.SerializeToString())
-			print '{0} generated.'.format(out_put_filename)
-		except:
-			print 'ERROR',out_put_filename
+#		train_dir = ''
+#		out_put_filename = ''
+#		if np.random.randint(1, 100) < 100 * train_ratio:
+#			train_dir = 'train'
+#			out_put_filename = train_dir + '-' + str(train_count) + '.tfrecord'
+#			train_count += 1
+#		else:
+#			train_dir = 'test'
+#			out_put_filename = train_dir + '-' + str(test_count) + '.tfrecord'
+#			test_count += 1
+#		output_dir = os.path.join(OUTPUT_DIR,train_dir,out_put_filename)
+#		example = make_example(image, image_data, label, text, img_height, img_width)
+#		try:
+#			writer = tf.python_io.TFRecordWriter(output_dir)
+#			writer.write(example.SerializeToString())
+#			print '{0} generated.'.format(out_put_filename)
+#		except:
+#			print 'ERROR',out_put_filename
 		
 def get_image(sess,filename):
     """Given path to an image file, load its data and size"""

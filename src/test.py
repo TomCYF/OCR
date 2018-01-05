@@ -29,7 +29,7 @@ tf.app.flags.DEFINE_string('model','../data/model',
 tf.app.flags.DEFINE_string('output','test',
                           """Sub-directory of model for test summary events""")
 
-tf.app.flags.DEFINE_integer('batch_size',2**4,
+tf.app.flags.DEFINE_integer('batch_size',2**10,
                             """Eval batch size""")
 tf.app.flags.DEFINE_integer('test_interval_secs', 60,
                              'Time between test runs')

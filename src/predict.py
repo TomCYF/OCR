@@ -33,7 +33,7 @@ import model
 
 FLAGS = tf.app.flags.FLAGS
 
-tf.app.flags.DEFINE_string('model','../data/model',
+tf.app.flags.DEFINE_string('model','/home/tal-cai/Src/Model/model-OCR-105495',
                           """Directory for model checkpoints""")
 tf.app.flags.DEFINE_string('output','predict',
                           """Sub-directory of model for test summary events""")
@@ -46,7 +46,7 @@ tf.app.flags.DEFINE_integer('test_interval_secs', 60,
 tf.app.flags.DEFINE_string('device','/gpu:0',
                            """Device for graph placement""")
 
-tf.app.flags.DEFINE_string('file_path','../data/predict/testdemo2.png',
+tf.app.flags.DEFINE_string('file_path','../data/predict/4_0_2.png',
                            """Base directory for ../data/predict data""")
 
 tf.logging.set_verbosity(tf.logging.WARN)
@@ -63,6 +63,7 @@ def get_charset():
 	for line in dict_file:
 		char = line.strip().split()[0]
 		temp_set.append(char)
+	temp_set.append(' ')
 	return temp_set
 ch_charset = get_charset()
 print len(ch_charset)
@@ -79,7 +80,7 @@ def _get_input():
 	""" Load the image from source"""
 	
 	raw_image = tf.gfile.FastGFile(FLAGS.file_path, 'r').read()  
-	image_data = tf.image.decode_png(raw_image)
+	image_data = tf.image.decode_jpeg(raw_image)
 	image_data = tf.image.convert_image_dtype(image_data,dtype=tf.uint8)
 #	image_data = tf.image.flip_up_down(image_data)
 #	image_data = tf.image.transpose_image(image_data)
@@ -92,7 +93,7 @@ def _get_input():
 	
 #	new_width =  (new_height / height) * width
 #	print shape,height,width,new_height,new_width
-	image_data = tf.image.resize_images(image_data,[64,576])
+	image_data = tf.image.resize_images(image_data,[64,256])
 #	image_shape = image_data.get_shape()
 #	new_width = image_shape[0]/32.*image_shape[1]
 #	print image_shape#,new_width
@@ -162,7 +163,7 @@ def main(argv=None):
 			sess.run(init_op)
 			
 			image_data = sess.run(image)
-			image_data=image_data.reshape((64,576))
+			image_data=image_data.reshape((64,256))
 			restore_model(sess, _get_checkpoint())
 			# image_data = plt.imread(FLAGS.file_path)
 			# image_data = rgb2gray(image_data)
@@ -178,8 +179,8 @@ def main(argv=None):
 			print image_data.shape
 			plt.imshow(image_data, cmap = plt.cm.gray)
 			
-			image_data = image_data.reshape((1,64,576,1))
-			pred_output,l,sl = sess.run(step_ops,feed_dict={pred_img:image_data,img_width:576})
+			image_data = image_data.reshape((1,64,256,1))
+			pred_output,l,sl = sess.run(step_ops,feed_dict={pred_img:image_data,img_width:256})
 
 			print pred_output
 			text_output = [ch_charset[c].encode('utf-8') for c in pred_output]
@@ -188,8 +189,9 @@ def main(argv=None):
 				text += i.encode('utf-8')
 			print text
 			print sl
-			#for j in l:
-				#print ch_charset[np.argmax(j)-1].encode('utf-8'),
+			#print l
+			for j in l:
+				print np.argmax(j),
 				#print j,			
 			plt.title(text)		
 			plt.show()

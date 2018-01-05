@@ -87,16 +87,17 @@ def convnet_layers(inputs, widths, mode):
         pool2 = pool_layer( conv2, 2, 'valid', 'pool2')        # 15,15
         conv3 = conv_layer( pool2, layer_params[2], training ) # 15,15
         conv4 = conv_layer( conv3, layer_params[3], training ) # 15,15
-        pool4 = pool_layer( conv4, 1, 'valid', 'pool4' )       # 7,14
+        pool4 = pool_layer( conv4, 2, 'valid', 'pool4' )       # 7,14
         conv5 = conv_layer( pool4, layer_params[4], training ) # 7,14
         conv6 = conv_layer( conv5, layer_params[5], training ) # 7,14
-        pool6 = pool_layer( conv6, 1, 'valid', 'pool6')        # 3,13
+        pool6 = pool_layer( conv6, 2, 'valid', 'pool6')        # 3,13
         conv7 = conv_layer( pool6, layer_params[6], training ) # 3,13
         conv8 = conv_layer( conv7, layer_params[7], training ) # 3,13
-        pool8 = pool_layer( conv8, 1, 'valid', 'pool8') # 3,13
-        conv9 = conv_layer( pool8, layer_params[9], training ) # 3,13
-        pool10 = tf.layers.max_pooling2d( conv9, [3,1], [3,1], 
-                                   padding='valid', name='pool8') # 1,13
+        pool8 = pool_layer( conv8, 2, 'valid', 'pool8') # 3,13
+        conv9 = conv_layer( pool8, layer_params[8], training ) # 3,13
+        conv10 = conv_layer( conv9, layer_params[9], training ) # 3,13
+        pool10 = tf.layers.max_pooling2d( conv10, [3,1], [3,1], 
+                                   padding='valid', name='pool10') # 1,13
         features = tf.squeeze(pool10, axis=1, name='features') # squeeze row dim
 
         kernel_sizes = [ params[1] for params in layer_params]
@@ -109,10 +110,14 @@ def convnet_layers(inputs, widths, mode):
         two = tf.constant(2, dtype=tf.int32, name='two')
         after_conv1 = tf.subtract( widths, conv1_trim)
         after_pool2 = tf.floor_div( after_conv1, two )
-        after_pool4 = tf.subtract(after_pool2, one)
-        after_pool6 = tf.subtract(after_pool4, one) 
-        after_pool8 = tf.subtract(after_pool6, one)
+        after_pool4 = tf.floor_div( after_pool2, two )
+        after_pool6 = tf.floor_div( after_pool4, two )
+        after_pool8 = tf.floor_div( after_pool6, two )
         after_pool10 = after_pool8
+#        after_pool4 = tf.subtract(after_pool2, one)
+#        after_pool6 = tf.subtract(after_pool4, one) 
+#        after_pool8 = tf.subtract(after_pool6, one)
+#        after_pool10 = after_pool8
 
         sequence_length = tf.reshape(after_pool10,[-1], name='seq_len') # Vectorize
 
